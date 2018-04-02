@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNet.OData;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using ODataServer.Models;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +10,8 @@ namespace ODataServer.Controllers
 {
     public class MaterialsController : ODataController
     {
-        private List<Material> _materials = new List<Material>
+        const string SessionKeyName = "_Materials";
+        List<Material> DefaultMaterials = new List<Material>
         {
             new Material
             {
@@ -26,15 +29,26 @@ namespace ODataServer.Controllers
             }
         };
 
+        private List<Material> GetMaterials()
+        {
+            var materials = HttpContext.Session.Get<List<Material>>(SessionKeyName);
+            if (materials == null)
+            {
+                materials = DefaultMaterials;
+            }
+
+            return materials;
+        }
+
         [EnableQuery]
         public IQueryable<Material> Get()
         {
-            return _materials.AsQueryable();
+            return GetMaterials().AsQueryable();
         }
 
         public IActionResult Get(string key)
         {
-            Material material = _materials.FirstOrDefault(e => e.Id == key);
+            Material material = GetMaterials().FirstOrDefault(e => e.Id == key);
             if (material == null)
             {
                 return NotFound();
@@ -45,7 +59,7 @@ namespace ODataServer.Controllers
 
         public IActionResult GetName(string key)
         {
-            Material material = _materials.FirstOrDefault(e => e.Id == key);
+            Material material = GetMaterials().FirstOrDefault(e => e.Id == key);
             if (material == null)
             {
                 return NotFound();
@@ -56,7 +70,7 @@ namespace ODataServer.Controllers
 
         public ActionResult GetDynamicProperty(string key, string dynamicProperty)
         {
-            Material material = _materials.FirstOrDefault(c => c.Id == key);
+            Material material = GetMaterials().FirstOrDefault(c => c.Id == key);
             if (material == null || !material.Dynamics.Keys.Contains(dynamicProperty))
             {
                 return NotFound();
@@ -73,8 +87,25 @@ namespace ODataServer.Controllers
             }
 
             // For this sample, we aren't enforcing unique keys.
-            _materials.Add(material);
+            var materials = GetMaterials();
+            materials.Add(material);
+            HttpContext.Session.Set<List<Material>>(SessionKeyName, materials);
             return Created(material);
+        }
+    }
+
+    public static class SessionExtensions
+    {
+        public static void Set<T>(this ISession session, string key, T value)
+        {
+            session.SetString(key, JsonConvert.SerializeObject(value));
+        }
+
+        public static T Get<T>(this ISession session, string key)
+        {
+            var value = session.GetString(key);
+            return value == null ? default(T) :
+                                  JsonConvert.DeserializeObject<T>(value);
         }
     }
 }
