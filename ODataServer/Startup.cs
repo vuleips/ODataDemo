@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNet.OData.Builder;
 using Microsoft.AspNet.OData.Extensions;
+using Microsoft.AspNet.OData.Routing.Conventions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using ODataServer.Extensions;
 using ODataServer.Models;
 using System;
 
@@ -51,7 +53,9 @@ namespace ODataServer
             builder.EntityType<Material>().Filter("Name");
             builder.EntityType<Material>().OrderBy("Name");
             app.UseMvc(routes =>
-                routes.MapODataServiceRoute("ODataRoute", null, builder.GetEdmModel())
+                routes.MapODataServiceRoute("ODataRoute", null, builder.GetEdmModel(),
+                    pathHandler: new PathAndSlashEscapeODataPathHandler(), 
+                    routingConventions: ODataRoutingConventions.CreateDefault())
             );
         }
     }
