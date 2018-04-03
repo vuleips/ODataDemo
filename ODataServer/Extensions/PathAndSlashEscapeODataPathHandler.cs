@@ -6,7 +6,7 @@ namespace ODataServer.Extensions
 {
     // NOTE: please do not use in production
     // Reference: https://github.com/OData/ODataSamples/tree/master/WebApi/v4/ODataPathAndSlashEscapeSample
-    public class PathAndSlashEscapeODataPathHandler : DefaultODataPathHandler
+    public class SpecialCharsEscapeODataPathHandler : DefaultODataPathHandler
     {
         private const string EscapedQuote = "'";
 
@@ -21,21 +21,22 @@ namespace ODataServer.Extensions
             var queryStringIndex = odataPath.IndexOf('?');
             if (queryStringIndex == -1)
             {
-                EscapeSlashBackslash(odataPath, pathBuilder);
+                EscapeSpecialChars(odataPath, pathBuilder);
             }
             else
             {
-                EscapeSlashBackslash(odataPath.Substring(0, queryStringIndex), pathBuilder);
+                EscapeSpecialChars(odataPath.Substring(0, queryStringIndex), pathBuilder);
                 pathBuilder.Append(odataPath.Substring(queryStringIndex));
             }
             return base.Parse(serviceRoot, pathBuilder.ToString(), requestContainer);
         }
 
-        private void EscapeSlashBackslash(string uri, StringBuilder pathBuilder)
+        private void EscapeSpecialChars(string uri, StringBuilder pathBuilder)
         {
             const string slash = "%2F";
             const string backSlash = "%5C";
             const string sharp = "%23";
+            const string whitespace = "%20";
 
             var startIndex = uri.IndexOf(EscapedQuote, StringComparison.OrdinalIgnoreCase);
             var endIndex = uri.IndexOf(EscapedQuote, startIndex + EscapedQuote.Length, StringComparison.OrdinalIgnoreCase);
@@ -60,12 +61,15 @@ namespace ODataServer.Extensions
                     case '#':
                         pathBuilder.Append(sharp);
                         break;
+                    case ' ':
+                        pathBuilder.Append(whitespace);
+                        break;
                     default:
                         pathBuilder.Append(uri[i]);
                         break;
                 }
             }
-            EscapeSlashBackslash(uri.Substring(endIndex), pathBuilder);
+            EscapeSpecialChars(uri.Substring(endIndex), pathBuilder);
         }
     }
 }

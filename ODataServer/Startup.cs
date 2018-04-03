@@ -54,7 +54,7 @@ namespace ODataServer
             builder.EntityType<Material>().OrderBy("Name");
             app.UseMvc(routes =>
                 routes.MapODataServiceRoute("ODataRoute", null, builder.GetEdmModel(),
-                    pathHandler: new PathAndSlashEscapeODataPathHandler(), 
+                    pathHandler: new SpecialCharsEscapeODataPathHandler(), 
                     routingConventions: ODataRoutingConventions.CreateDefault())
             );
         }
