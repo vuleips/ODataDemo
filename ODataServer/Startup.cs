@@ -48,6 +48,8 @@ namespace ODataServer
 
             var builder = new ODataConventionModelBuilder();
             builder.EntitySet<Material>("Materials");
+            builder.EntityType<Material>().Filter("Name");
+            builder.EntityType<Material>().OrderBy("Name");
             app.UseMvc(routes =>
                 routes.MapODataServiceRoute("ODataRoute", null, builder.GetEdmModel())
             );
